@@ -765,16 +765,36 @@ int main(int argc, char **argv)
   initialize(argc, argv);
   {
   // from testMiniWeatherArray.arc
-  const int nb_cell_x = 400;
-  const int nb_cell_z = 200;
-  const double final_time = 2.0;
+  int nb_cell_x = 400;
+  int nb_cell_z = 200;
+  double final_time = 2.0;
+  
+  if (argc == 1)
+	{
+    std::cout << "Usage:    no arg = default values, 3 args = nb_cell_x nb_cell_z final_time" << std::endl;
+    std::cout << "##########################################################################" << std::endl;
+		std::cout << "### Using default values: nb_cell_x=400, nb_cell_z=200, final_time=2.0 ###" << std::endl;
+    std::cout << "##########################################################################" << std::endl;
+	}
+	else if (argc == 4)
+	{
+    nb_cell_x = atoi(argv[1]);
+    nb_cell_z = atoi(argv[2]);
+    final_time = atof(argv[3]);
+    std::cout << "##########################################################################" << std::endl;
+		std::cout << "### Using default values: nb_cell_x=" << nb_cell_x << ", nb_cell_z=" << nb_cell_z << ", final_time=" << final_time << " ###" << std::endl;
+    std::cout << "##########################################################################" << std::endl;
+	} else {
+    std::cerr << "[ERROR], wrong number of arguments." << std::endl;
+    std::cout << "Usage: no arg = default values, 3 args = nb_cell_x nb_cell_z final_time" << std::endl;
+  }
   
   View<double[NUM_VARS], MiniWeatherArray::TargetMem> reduced_values("reduced_values");
 
   MiniWeatherArray* mw = new MiniWeatherArray(nb_cell_x, nb_cell_z, final_time);
   
   mw->doExit(reduced_values);
-  std::cout << "---------- Init ----------" << std::endl;
+  std::cout << "---------- Init -----------" << std::endl;
   for (int ll = 0; ll < NUM_VARS; ll++)
     std::cout << "SUM var" << ll << " sum_v=" << reduced_values[ll] << std::endl;
   std::cout << std::endl;
@@ -782,12 +802,13 @@ int main(int argc, char **argv)
   while (!(mw->doOneIteration())) {}
   mw->doExit(reduced_values);
   
-  std::cout << "---------- Final ----------" << std::endl;
+  std::cout << "---------- Final -----------" << std::endl;
   for (int ll = 0; ll < NUM_VARS; ll++)
     std::cout << "SUM var" << ll << " sum_v=" << reduced_values[ll] << std::endl;
   std::cout << std::endl;
   
-  std::cout << "---------- Check diff ----------" << std::endl;
+  std::cout << "---------- Check diff -----------" << std::endl;
+  std::cout << "- only legit for default values -" << std::endl;
   double ref_v[NUM_VARS] = {26.6243096397231, 2631.23267576729, -259.490171322721, 7897.73654775889};
   for (int ll = 0; ll < NUM_VARS; ll++)
     std::cout << "rdiff" << ll << " = " << reduced_values[ll] - ref_v[ll] << std::endl;

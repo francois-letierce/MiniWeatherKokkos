@@ -43,7 +43,7 @@
 
 #include "Kokkos_Core.hpp"
 
-#include <math.h>
+#include "ChronoTimer.h"
 
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -57,7 +57,6 @@
 
 // namespace MiniWeatherArray
 // {
-using namespace Kokkos;
 
 // constexpr double pi = 3.14159265358979323846264338327;       //Pi
 constexpr double grav = 9.8;                             //Gravitational acceleration (m / s^2)
@@ -116,7 +115,7 @@ class MiniWeatherArray
  public:
   
   int doOneIteration();
-  void doExit(View<double[NUM_VARS], TargetMem> reduced_values);
+  void doExit(Kokkos::View<double[NUM_VARS], TargetMem> reduced_values);
 
  public:
 
@@ -125,16 +124,16 @@ class MiniWeatherArray
   void injection(double x, double z, double &r, double &u, double &w, double &t, double &hr, double &ht) const;
   KOKKOS_INLINE_FUNCTION
   void hydro_const_theta(double z, double &r, double &t) const;
-  void output(View<double***, TargetMem> state, double etime);
-  void perform_timestep(View<double***, TargetMem> state, View<double***, TargetMem> state_tmp,
-                        View<double***, TargetMem> flux, View<double***, TargetMem> tend, double dt);
-  void semi_discrete_step(View<double***, TargetMem> nstate_init, View<double***, TargetMem> nstate_forcing,
-                          View<double***, TargetMem> nstate_out, double dt, int dir,
-                          View<double***, TargetMem> flux, View<double***, TargetMem> tend);
-  void compute_tendencies_x(View<double***, TargetMem> nstate, View<double***, TargetMem> flux, View<double***, TargetMem> tend);
-  void compute_tendencies_z(View<double***, TargetMem> nstate, View<double***, TargetMem> flux, View<double***, TargetMem> tend);
-  void set_halo_values_x(View<double***, TargetMem> nstate);
-  void set_halo_values_z(View<double***, TargetMem> nstate);
+  void output(Kokkos::View<double***, TargetMem> state, double etime);
+  void perform_timestep(Kokkos::View<double***, TargetMem> state, Kokkos::View<double***, TargetMem> state_tmp,
+                        Kokkos::View<double***, TargetMem> flux, Kokkos::View<double***, TargetMem> tend, double dt);
+  void semi_discrete_step(Kokkos::View<double***, TargetMem> nstate_init, Kokkos::View<double***, TargetMem> nstate_forcing,
+                          Kokkos::View<double***, TargetMem> nstate_out, double dt, int dir,
+                          Kokkos::View<double***, TargetMem> flux, Kokkos::View<double***, TargetMem> tend);
+  void compute_tendencies_x(Kokkos::View<double***, TargetMem> nstate, Kokkos::View<double***, TargetMem> flux, Kokkos::View<double***, TargetMem> tend);
+  void compute_tendencies_z(Kokkos::View<double***, TargetMem> nstate, Kokkos::View<double***, TargetMem> flux, Kokkos::View<double***, TargetMem> tend);
+  void set_halo_values_x(Kokkos::View<double***, TargetMem> nstate);
+  void set_halo_values_z(Kokkos::View<double***, TargetMem> nstate);
 
  private:
 
@@ -165,11 +164,11 @@ class MiniWeatherArray
   double dx() const { return m_const.dx; }
   double dz() const { return m_const.dz; }
 
-  View<double*, TargetMem> hy_dens_cell;       // hydrostatic density (vert cell avgs).   Dimensions: (1-hs:nz+hs)
-  View<double*, TargetMem> hy_dens_theta_cell; // hydrostatic rho*t (vert cell avgs).     Dimensions: (1-hs:nz+hs)
-  View<double*, TargetMem> hy_dens_int;        // hydrostatic density (vert cell interf). Dimensions: (1:nz+1)
-  View<double*, TargetMem> hy_dens_theta_int;  // hydrostatic rho*t (vert cell interf).   Dimensions: (1:nz+1)
-  View<double*, TargetMem> hy_pressure_int;    // hydrostatic press (vert cell interf).   Dimensions: (1:nz+1)
+  Kokkos::View<double*, TargetMem> hy_dens_cell;       // hydrostatic density (vert cell avgs).   Dimensions: (1-hs:nz+hs)
+  Kokkos::View<double*, TargetMem> hy_dens_theta_cell; // hydrostatic rho*t (vert cell avgs).     Dimensions: (1-hs:nz+hs)
+  Kokkos::View<double*, TargetMem> hy_dens_int;        // hydrostatic density (vert cell interf). Dimensions: (1:nz+1)
+  Kokkos::View<double*, TargetMem> hy_dens_theta_int;  // hydrostatic rho*t (vert cell interf).   Dimensions: (1:nz+1)
+  Kokkos::View<double*, TargetMem> hy_pressure_int;    // hydrostatic press (vert cell interf).   Dimensions: (1:nz+1)
 
   ///////////////////////////////////////////////////////////////////////////////////////
   // Variables that are dynamics over the course of the simulation
@@ -177,12 +176,15 @@ class MiniWeatherArray
   double etime;          //Elapsed model time
   double output_counter; //Helps determine when it's time to do output
   // Runtime variable arrays
-  View<double***, TargetMem> nstate;     // Fluid state.             Dimensions: (1-hs:nx+hs,1-hs:nz+hs,NUM_VARS)
-  View<double***, TargetMem> nstate_tmp; // Fluid state.             Dimensions: (1-hs:nx+hs,1-hs:nz+hs,NUM_VARS)
-  View<double***, TargetMem> nflux; // Cell interface fluxes.   Dimensions: (nx+1,nz+1,NUM_VARS)
-  View<double***, TargetMem> ntend; // Fluid state tendencies.  Dimensions: (nx,nz,NUM_VARS)
+  Kokkos::View<double***, TargetMem> nstate;     // Fluid state.             Dimensions: (1-hs:nx+hs,1-hs:nz+hs,NUM_VARS)
+  Kokkos::View<double***, TargetMem> nstate_tmp; // Fluid state.             Dimensions: (1-hs:nx+hs,1-hs:nz+hs,NUM_VARS)
+  Kokkos::View<double***, TargetMem> nflux;      // Cell interface fluxes.   Dimensions: (nx+1,nz+1,NUM_VARS)
+  Kokkos::View<double***, TargetMem> ntend;      // Fluid state tendencies.  Dimensions: (nx,nz,NUM_VARS)
   int num_out = 0;   // The number of outputs performed so far
   int direction_switch = 1;
+  
+  public:
+   ChronoTimer m_timer;
 };
 
 /*---------------------------------------------------------------------------*/
@@ -233,6 +235,8 @@ doOneIteration()
 
   //Output the initial state
   //output(state, etime);
+  
+  m_timer.start();
 
   while (etime < m_const.sim_time)
   {
@@ -257,8 +261,10 @@ doOneIteration()
       output_counter = output_counter - output_freq();
       output(nstate, etime);
     }
+    m_timer.stop();
     return 0;
   }
+  m_timer.stop();
   return 1;
 }
 
@@ -273,8 +279,8 @@ doOneIteration()
 // q**    = q[n] + dt/2 * rhs(q*  )
 // q[n+1] = q[n] + dt/1 * rhs(q** )
 void MiniWeatherArray::
-perform_timestep(View<double***, TargetMem> state, View<double***, TargetMem> state_tmp,
-                 View<double***, TargetMem> flux, View<double***, TargetMem> tend, double dt)
+perform_timestep(Kokkos::View<double***, TargetMem> state, Kokkos::View<double***, TargetMem> state_tmp,
+                 Kokkos::View<double***, TargetMem> flux, Kokkos::View<double***, TargetMem> tend, double dt)
 {
   if (direction_switch==1){
     //x-direction first
@@ -312,8 +318,9 @@ perform_timestep(View<double***, TargetMem> state, View<double***, TargetMem> st
 //state_out = state_init + dt * rhs(state_forcing)
 //Meaning the step starts from state_init, computes the rhs using state_forcing, and stores the result in state_out
 void MiniWeatherArray::
-semi_discrete_step(View<double***, TargetMem> nstate_init, View<double***, TargetMem> nstate_forcing, View<double***, TargetMem> nstate_out,
-                   double dt, int dir, View<double***, TargetMem> flux, View<double***, TargetMem> tend)
+semi_discrete_step(Kokkos::View<double***, TargetMem> nstate_init, Kokkos::View<double***, TargetMem> nstate_forcing,
+                   Kokkos::View<double***, TargetMem> nstate_out, double dt, int dir,
+                   Kokkos::View<double***, TargetMem> flux, Kokkos::View<double***, TargetMem> tend)
 {
   if (dir == DIR_X) {
     // Set the halo values  in the x-direction
@@ -328,8 +335,8 @@ semi_discrete_step(View<double***, TargetMem> nstate_init, View<double***, Targe
     compute_tendencies_z(nstate_forcing, flux, tend);
   }
 
-  MDRangePolicy<TargetExec, Rank<3>> mdrange({0,0,0},{NUM_VARS,nz(),nx()});
-  parallel_for(mdrange, KOKKOS_CLASS_LAMBDA(int ll, int k, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<3>> mdrange({0,0,0},{NUM_VARS,nz(),nx()});
+  Kokkos::parallel_for(mdrange, KOKKOS_CLASS_LAMBDA(int ll, int k, int i)
   {
     nstate_out(ll,k+hs,i+hs) = nstate_init(ll,k+hs,i+hs) + dt * tend(ll, k, i);
   });
@@ -343,7 +350,8 @@ semi_discrete_step(View<double***, TargetMem> nstate_init, View<double***, Targe
 //First, compute the flux vector at each cell interface in the x-direction (including hyperviscosity)
 //Then, compute the tendencies using those fluxes
 void MiniWeatherArray::
-compute_tendencies_x(View<double***, TargetMem> nstate, View<double***, TargetMem> flux, View<double***, TargetMem> tend)
+compute_tendencies_x(Kokkos::View<double***, TargetMem> nstate, Kokkos::View<double***, TargetMem> flux,
+                     Kokkos::View<double***, TargetMem> tend)
 {
   const auto dx = this->dx();
   const auto nx = this->nx();
@@ -359,8 +367,8 @@ compute_tendencies_x(View<double***, TargetMem> nstate, View<double***, TargetMe
   const double hv_coef = -hv_beta * dx / (16 * dt());
 
   //Compute fluxes in the x-direction for each cell
-  MDRangePolicy<TargetExec, Rank<2>> mdrange2d({0, 0},{nz, nx + 1});
-  parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int k, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<2>> mdrange2d({0, 0},{nz, nx + 1});
+  Kokkos::parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int k, int i)
   {
     double r, u, w, t, p, stencil[4], d3_vals[NUM_VARS], vals[NUM_VARS];
     //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
@@ -389,8 +397,8 @@ compute_tendencies_x(View<double***, TargetMem> nstate, View<double***, TargetMe
   });
 
   // Use the fluxes to compute tendencies for each cell
-  MDRangePolicy<TargetExec, Rank<3>> mdrange3d({0,0,0},{NUM_VARS,nz,nx});
-  parallel_for(mdrange3d, KOKKOS_CLASS_LAMBDA(int ll, int k, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<3>> mdrange3d({0,0,0},{NUM_VARS,nz,nx});
+  Kokkos::parallel_for(mdrange3d, KOKKOS_CLASS_LAMBDA(int ll, int k, int i)
   {
     tend(ll,k,i) = -(flux(ll,k,i+1) - flux(ll, k, i)) / dx;
   });
@@ -404,7 +412,8 @@ compute_tendencies_x(View<double***, TargetMem> nstate, View<double***, TargetMe
 //First, compute the flux vector at each cell interface in the z-direction (including hyperviscosity)
 //Then, compute the tendencies using those fluxes
 void MiniWeatherArray::
-compute_tendencies_z(View<double***, TargetMem> nstate, View<double***, TargetMem> flux, View<double***, TargetMem> tend)
+compute_tendencies_z(Kokkos::View<double***, TargetMem> nstate, Kokkos::View<double***, TargetMem> flux,
+                     Kokkos::View<double***, TargetMem> tend)
 {
   const auto dx = this->dx();
   const auto dz = this->dz();
@@ -419,8 +428,8 @@ compute_tendencies_z(View<double***, TargetMem> nstate, View<double***, TargetMe
   //Compute the hyperviscosity coeficient
   const double hv_coef = -hv_beta * dx / (16 * dt());
   //Compute fluxes in the x-direction for each cell
-  MDRangePolicy<TargetExec, Rank<2>> mdrange2d({0, 0},{nz + 1, nx});
-  parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int k, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<2>> mdrange2d({0, 0},{nz + 1, nx});
+  Kokkos::parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int k, int i)
   {
     double r, u, w, t, p, stencil[4], d3_vals[NUM_VARS], vals[NUM_VARS];
     //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
@@ -449,8 +458,8 @@ compute_tendencies_z(View<double***, TargetMem> nstate, View<double***, TargetMe
   });
 
   // Use the fluxes to compute tendencies for each cell
-  MDRangePolicy<TargetExec, Rank<3>> mdrange3d({0,0,0},{NUM_VARS,nz,nx});
-  parallel_for(mdrange3d, KOKKOS_CLASS_LAMBDA(int ll, int k, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<3>> mdrange3d({0,0,0},{NUM_VARS,nz,nx});
+  Kokkos::parallel_for(mdrange3d, KOKKOS_CLASS_LAMBDA(int ll, int k, int i)
   {
     double t = -(flux(ll,k+1,i) - flux(ll, k, i)) / dz;
     if (ll == ID_WMOM_)
@@ -463,7 +472,7 @@ compute_tendencies_z(View<double***, TargetMem> nstate, View<double***, TargetMe
 /*---------------------------------------------------------------------------*/
 
 void MiniWeatherArray::
-set_halo_values_x(View<double***, TargetMem> nstate)
+set_halo_values_x(Kokkos::View<double***, TargetMem> nstate)
 {
   const auto nx = this->nx();
   const auto nz = this->nz();
@@ -475,8 +484,8 @@ set_halo_values_x(View<double***, TargetMem> nstate)
   constexpr int ID_RHOT_ = ID_RHOT;
   constexpr int hs_ = hs;
 
-  MDRangePolicy<TargetExec, Rank<2>> mdrange2d({0, 0},{NUM_VARS, nz});
-  parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int ll, int k)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<2>> mdrange2d({0, 0},{NUM_VARS, nz});
+  Kokkos::parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int ll, int k)
   {
     nstate(ll,k+hs_,0) = nstate(ll,k+hs_,nx+hs_-2);
     nstate(ll,k+hs_,1) = nstate(ll,k+hs_,nx+hs_-1);
@@ -485,8 +494,8 @@ set_halo_values_x(View<double***, TargetMem> nstate)
   });
 
   if (m_const.myrank == 0) {
-    MDRangePolicy<TargetExec, Rank<2>> mdrange({0, 0},{nz, hs_});
-    parallel_for(mdrange, KOKKOS_CLASS_LAMBDA(int k, int i)
+    Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<2>> mdrange({0, 0},{nz, hs_});
+    Kokkos::parallel_for(mdrange, KOKKOS_CLASS_LAMBDA(int k, int i)
     {
       double z = ((double)(k_beg + k) + 0.5) * dz;
       if (abs(z - 3 * zlen / 4) <= zlen / 16){
@@ -503,15 +512,15 @@ set_halo_values_x(View<double***, TargetMem> nstate)
 //Set this task's halo values in the z-direction.
 //decomposition in the vertical direction.
 void MiniWeatherArray::
-set_halo_values_z(View<double***, TargetMem> nstate)
+set_halo_values_z(Kokkos::View<double***, TargetMem> nstate)
 {
   const auto nx = this->nx();
   const auto nz = this->nz();
 
   constexpr int hs_ = hs;
 
-  MDRangePolicy<TargetExec, Rank<2>> mdrange2d({0, 0},{NUM_VARS, nx+2*hs_});
-  parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int ll, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<2>> mdrange2d({0, 0},{NUM_VARS, nx+2*hs_});
+  Kokkos::parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int ll, int i)
   {
     if (ll == ID_WMOM){
       nstate(ll,0,i) = 0.0;
@@ -534,7 +543,7 @@ set_halo_values_z(View<double***, TargetMem> nstate)
 void MiniWeatherArray::
 init()
 {
-  int  k, kk;
+  // int k, kk;
 
   m_const.nranks = 1;
   m_const.myrank = 0;
@@ -574,15 +583,15 @@ init()
   constexpr int ID_RHOT_ = ID_RHOT;
 
   // Allocate the model data
-  resize(nstate, NUM_VARS,(nz + 2 * hs),(nx + 2 * hs));
-  resize(nstate_tmp, NUM_VARS,(nz + 2 * hs),(nx + 2 * hs));
-  resize(nflux, NUM_VARS,nz+1,nx+1); 
-  resize(ntend, NUM_VARS,nz,nx);
-  resize(hy_dens_cell, nz + 2 * hs);
-  resize(hy_dens_theta_cell, nz + 2 * hs);
-  resize(hy_dens_int, nz + 1);
-  resize(hy_dens_theta_int, nz + 1);
-  resize(hy_pressure_int, nz + 1);
+  Kokkos::resize(nstate, NUM_VARS,(nz + 2 * hs),(nx + 2 * hs));
+  Kokkos::resize(nstate_tmp, NUM_VARS,(nz + 2 * hs),(nx + 2 * hs));
+  Kokkos::resize(nflux, NUM_VARS,nz+1,nx+1); 
+  Kokkos::resize(ntend, NUM_VARS,nz,nx);
+  Kokkos::resize(hy_dens_cell, nz + 2 * hs);
+  Kokkos::resize(hy_dens_theta_cell, nz + 2 * hs);
+  Kokkos::resize(hy_dens_int, nz + 1);
+  Kokkos::resize(hy_dens_theta_int, nz + 1);
+  Kokkos::resize(hy_pressure_int, nz + 1);
 
   //Define the maximum stable time step based on an assumed maximum wind speed
   m_const.dt = dmin(dx, dz) / max_speed * cfl;
@@ -614,8 +623,8 @@ init()
   // Initialize the cell-averaged fluid state via Gauss-Legendre quadrature
   //////////////////////////////////////////////////////////////////////////
 
-  MDRangePolicy<TargetExec, Rank<2>> mdrange2d({0, 0},{nz+2*hs,nx+2*hs});
-  parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int k, int i)
+  Kokkos::MDRangePolicy<TargetExec, Kokkos::Rank<2>> mdrange2d({0, 0},{nz+2*hs,nx+2*hs});
+  Kokkos::parallel_for(mdrange2d, KOKKOS_CLASS_LAMBDA(int k, int i)
   {
     double r, u, w, t, hr, ht;
     for (int ll = 0; ll < NUM_VARS; ll++)
@@ -645,12 +654,13 @@ init()
   std::cout << "End init part 1" << std::endl;
 
   // Compute the hydrostatic background state over vertical cell averages
+  Kokkos::parallel_for(nz + 2 * hs, KOKKOS_CLASS_LAMBDA(int k)
   {
     double r, u, w, t, hr, ht;
-    for (k = 0; k < nz + 2 * hs; k++){
+    // for (k = 0; k < nz + 2 * hs; k++){
       double dens_cell = 0.0;
       double dens_theta_cell = 0.0;
-      for (kk = 0; kk < nqpoints; kk++){
+      for (int kk = 0; kk < nqpoints; kk++){
         double z = (k_beg + k - hs + 0.5) * dz;
 
         // Set the fluid state based on the user's specification (default is injection in this example)
@@ -661,13 +671,14 @@ init()
       }
       hy_dens_cell(k) = dens_cell;
       hy_dens_theta_cell(k) = dens_theta_cell;
-    }
-  }
+    //}
+  });
 
+  Kokkos::parallel_for(nz + 1, KOKKOS_CLASS_LAMBDA(int k)
   {
     double r, u, w, t, hr, ht;
     // Compute the hydrostatic background state at vertical cell interfaces
-    for (k = 0; k < nz + 1; k++) {
+    // for (k = 0; k < nz + 1; k++) {
       double z = (k_beg + k) * dz;
 
       //Set the fluid state based on the user's specification (default is injection in this example)
@@ -676,8 +687,8 @@ init()
       hy_dens_int(k) = hr;
       hy_dens_theta_int(k) = hr * ht;
       hy_pressure_int(k) = C0 * pow((hr * ht), gamm);
-    }
-  }
+    // }
+  });
   std::cout << "End init part 2" << std::endl;
 }
 
@@ -727,7 +738,7 @@ hydro_const_theta(double z, double &r, double &t) const
 //The file I/O uses netcdf, the only external library required for this mini-app.
 //If it's too cumbersome, you can comment the I/O out, but you'll miss out on some potentially cool graphics
 void MiniWeatherArray::
-output(View<double***, TargetMem> state, double etime)
+output(Kokkos::View<double***, TargetMem> state, double etime)
 {
   //ARCANE_UNUSED(state);
   //ARCANE_UNUSED(etime);
@@ -737,7 +748,7 @@ output(View<double***, TargetMem> state, double etime)
 // Affiche la somme sur les mailles des variables.
 // Cela est utile pour la validation
 void MiniWeatherArray::
-doExit(View<double[NUM_VARS], TargetMem> reduced_values)
+doExit(Kokkos::View<double[NUM_VARS], TargetMem> reduced_values)
 {
   int k, i, ll;
   double sum_v[NUM_VARS];
@@ -762,7 +773,7 @@ doExit(View<double[NUM_VARS], TargetMem> reduced_values)
 
 int main(int argc, char **argv)
 {
-  initialize(argc, argv);
+  Kokkos::initialize(argc, argv);
   {
   // from testMiniWeatherArray.arc
   int nb_cell_x = 400;
@@ -789,7 +800,7 @@ int main(int argc, char **argv)
     std::cout << "Usage: no arg = default values, 3 args = nb_cell_x nb_cell_z final_time" << std::endl;
   }
   
-  View<double[NUM_VARS], MiniWeatherArray::TargetMem> reduced_values("reduced_values");
+  Kokkos::View<double[NUM_VARS], MiniWeatherArray::TargetMem> reduced_values("reduced_values");
 
   MiniWeatherArray* mw = new MiniWeatherArray(nb_cell_x, nb_cell_z, final_time);
   
@@ -813,10 +824,13 @@ int main(int argc, char **argv)
   for (int ll = 0; ll < NUM_VARS; ll++)
     std::cout << "rdiff" << ll << " = " << reduced_values[ll] - ref_v[ll] << std::endl;
   std::cout << std::endl;
+  
+  std::cout << "##### Timer stats for computeloop: #####" << std::endl;
+  std::cout << mw->m_timer.summary() << std::endl;
 
   delete mw;
   } 
-  finalize();
+  Kokkos::finalize();
 }
 
 /*---------------------------------------------------------------------------*/

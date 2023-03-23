@@ -19,12 +19,12 @@ CMAKE_POLICY(SET CMP0074 NEW)
 project(mw_kokkos_cuda)
 
 # Kokkos build: 
-#cmake ../kokkos-src/ -DCMAKE_CXX_COMPILER=/home/letiercef/kokkos/kokkos-src/bin/nvcc_wrapper -DKokkos_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=~/kokkos/kokkos-install-pattern4gpu -DKokkos_ENABLE_OPENMP=On -DKokkos_ENABLE_HWLOC=On -DKokkos_ENABLE_CUDA=On -DKokkos_ENABLE_CUDA_LAMBDA=On -DKokkos_ENABLE_CUDA_CONSTEXPR=On -DKokkos_ARCH_INTEL_GEN=On -DKokkos_ARCH_PASCAL61=On -DBUILD_SHARED_LIBS=On -DCMAKE_POSITION_INDEPENDENT_CODE=On
+#cmake ../kokkos-master/ -DCMAKE_CXX_COMPILER=/home/letiercef/kokkos/kokkos-master/bin/nvcc_wrapper -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=~/kokkos/kokkos-install -DKokkos_ENABLE_OPENMP=On -DKokkos_ENABLE_HWLOC=On -DKokkos_ENABLE_CUDA=On -DKokkos_ENABLE_CUDA_LAMBDA=On -DKokkos_ENABLE_CUDA_CONSTEXPR=On -DKokkos_ARCH_INTEL_GEN=On -DKokkos_ARCH_PASCAL61=On -DBUILD_SHARED_LIBS=On -DCMAKE_POSITION_INDEPENDENT_CODE=On
 
 find_package(Kokkos)
 if(TARGET Kokkos::kokkos)
   message(STATUS "Kokkos::kokkos found")
-  add_executable(mw_kokkos_cuda MiniWeatherKokkos.cc)
+  add_executable(mw_kokkos_cuda MiniWeatherKokkos.cc ChronoTimer.cc)
   target_link_libraries(mw_kokkos_cuda PUBLIC Kokkos::kokkos)
   target_compile_options(mw_kokkos_cuda PUBLIC -g --expt-relaxed-constexpr)
 else()
@@ -32,4 +32,4 @@ else()
 endif()
 
 # cmake:
-# mkdir build; cd build; cmake .. -DCMAKE_CXX_COMPILER=/home/letiercef/kokkos/kokkos-src/bin/nvcc_wrapper -DCMAKE_INSTALL_PREFIX=~/kokkos/kokkos-install-pattern4gpu
+# mkdir build; cd build; cmake .. -DCMAKE_CXX_COMPILER=/home/letiercef/kokkos/kokkos-master/bin/nvcc_wrapper -DCMAKE_INSTALL_PREFIX=~/kokkos/kokkos-install
